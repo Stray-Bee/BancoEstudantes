@@ -114,97 +114,151 @@ class _pag1State extends State<pag1> {
     }
   }
 
+  Widget _buildSectionTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("CRUD Estudante & Disciplinas"),
-        backgroundColor: Colors.cyan,
+        title: Text("Gerenciador de Estudantes"),
+        backgroundColor: Color.fromARGB(255, 132, 109, 233),
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(8),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // --- Formulário Estudante ---
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: _controllerNome,
-                decoration: InputDecoration(labelText: "Nome"),
+            Card(
+              elevation: 4,
+              margin: const EdgeInsets.all(8),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    _buildSectionTitle("Cadastro de Estudante"),
+                    _buildTextField(_controllerNome, "Nome"),
+                    _buildTextField(_controllerMatricula, "Matrícula"),
+                    ElevatedButton.icon(
+                      onPressed: _salvarOUEditarEstudante,
+                      icon: Icon(Icons.save),
+                      label: Text(
+                          _estudanteAtual == null ? "Salvar" : "Atualizar"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color.fromARGB(255, 132, 109, 233),
+                        minimumSize: Size(double.infinity, 40),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: _controllerMatricula,
-                decoration: InputDecoration(labelText: "Matrícula"),
+            Card(
+              elevation: 3,
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSectionTitle("Lista de Estudantes"),
+                    ..._listaEstudantes.map((e) => ListTile(
+                          title: Text(e.nome),
+                          subtitle: Text("Matrícula: ${e.matricula}"),
+                          trailing: IconButton(
+                            icon: Icon(Icons.delete, color: Colors.deepPurple),
+                            onPressed: () => _apagarEstudante(e.id!),
+                          ),
+                          onTap: () {
+                            setState(() {
+                              _estudanteAtual = e;
+                              _controllerNome.text = e.nome;
+                              _controllerMatricula.text = e.matricula;
+                            });
+                            _loadDisciplinasDoEstudante(e.id!);
+                          },
+                        )),
+                  ],
+                ),
               ),
             ),
-            ElevatedButton(
-              onPressed: _salvarOUEditarEstudante,
-              child: Text(_estudanteAtual == null ? "Salvar" : "Atualizar"),
-            ),
-
-            // --- Lista de Estudantes ---
-            Divider(),
-            Text("Lista de Estudantes", style: TextStyle(fontSize: 16)),
-            ..._listaEstudantes.map((e) => ListTile(
-                  title: Text(e.nome),
-                  subtitle: Text(e.matricula),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () => _apagarEstudante(e.id!),
-                  ),
-                  onTap: () {
-                    setState(() {
-                      _estudanteAtual = e;
-                      _controllerNome.text = e.nome;
-                      _controllerMatricula.text = e.matricula;
-                    });
-                    _loadDisciplinasDoEstudante(e.id!);
-                  },
-                )),
-
-            // --- Disciplinas ---
-            Divider(),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: _controllerNomeDisciplina,
-                decoration: InputDecoration(labelText: "Nova Disciplina"),
+            Card(
+              elevation: 3,
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    _buildSectionTitle("Gerenciar Disciplinas"),
+                    _buildTextField(
+                        _controllerNomeDisciplina, "Nova Disciplina"),
+                    ElevatedButton.icon(
+                      onPressed: _salvarDisciplina,
+                      icon: Icon(Icons.add),
+                      label: Text("Adicionar Disciplina"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color.fromARGB(255, 132, 109, 233),
+                        minimumSize: Size(double.infinity, 40),
+                      ),
+                    ),
+                    Divider(),
+                    _buildSectionTitle("Todas as Disciplinas"),
+                    ..._listaDisciplinas.map((d) => ListTile(
+                          title: Text(d.nome),
+                          trailing: IconButton(
+                            icon: Icon(Icons.link, color: Colors.green),
+                            onPressed: _estudanteAtual == null
+                                ? null
+                                : () => _vincularDisciplina(d.id!),
+                          ),
+                        )),
+                  ],
+                ),
               ),
             ),
-            ElevatedButton(
-              onPressed: _salvarDisciplina,
-              child: Text("Adicionar Disciplina"),
-            ),
-
-            Text("Todas as Disciplinas", style: TextStyle(fontSize: 16)),
-            ..._listaDisciplinas.map((d) => ListTile(
-                  title: Text(d.nome),
-                  trailing: IconButton(
-                    icon: Icon(Icons.link),
-                    onPressed: _estudanteAtual == null
-                        ? null
-                        : () => _vincularDisciplina(d.id!),
-                  ),
-                )),
-
-            // --- Disciplinas vinculadas ---
-            Divider(),
             if (_estudanteAtual != null)
-              Column(
-                children: [
-                  Text("Disciplinas de ${_estudanteAtual!.nome}",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ..._disciplinasDoEstudante.map((d) => ListTile(
-                        title: Text(d.nome),
-                        trailing: IconButton(
-                          icon: Icon(Icons.link_off),
-                          onPressed: () => _desvincularDisciplina(d.id!),
-                        ),
-                      )),
-                ],
+              Card(
+                elevation: 3,
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle(
+                          "Disciplinas de ${_estudanteAtual!.nome}"),
+                      ..._disciplinasDoEstudante.map((d) => ListTile(
+                            title: Text(d.nome),
+                            trailing: IconButton(
+                              icon: Icon(Icons.link_off,
+                                  color: const Color.fromARGB(255, 84, 7, 146)),
+                              onPressed: () => _desvincularDisciplina(d.id!),
+                            ),
+                          )),
+                    ],
+                  ),
+                ),
               ),
           ],
         ),
